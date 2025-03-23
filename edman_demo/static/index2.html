@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Try-On</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .hover-effect:hover {
+            transform: scale(1.05);
+            transition: transform 0.3s ease;
+        }
+
+        .dropdown-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 40vh;
+        }
+
+        .button-label-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-400 to-indigo-500">
+
+    <div class="container mx-auto p-4">
+        <div class="text-center mb-8">
+            <h1 class="text-5xl font-extrabold text-white">Yapay Zeka Deneme Kabini</h1>
+            <p class="text-xl text-gray-200">Kıyafetleri zahmetsizce yeni nesil yapay zeka ile üzerinizde görün.</p>
+        </div>
+        <div class="flex flex-col md:flex-row justify-between items-center bg-white p-6 shadow-lg rounded-lg">
+            <div class="input-area flex flex-col md:flex-row items-center">
+                <div class="upload-area flex flex-col justify-center items-center border-2 border-dashed border-gray-400 p-4 text-center mr-4 relative cursor-pointer hover:border-blue-500 transition-all duration-300 hover-effect"
+                    id="human-upload">
+                    <input type="file" id="human-photo" accept="image/*"
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="Upload your photo">
+                    <label for="human-photo" class="block text-gray-600">Fotoğrafınızı yüklemek için tıklayın veya
+                        sürükleyin bırakın</label>
+                    <img id="human-preview" class="max-w-xs max-h-xs mt-2 hidden">
+                </div>
+                <div class="middle-section flex flex-col items-center mt-4 md:mt-0">
+                    <div class="upload-area flex flex-col justify-center items-center border-2 border-dashed border-gray-400 p-4 text-center relative cursor-pointer hover:border-blue-500 transition-all duration-300 hover-effect"
+                        id="clothes-upload">
+                        <input type="file" id="clothes-photo" accept="image/*"
+                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            aria-label="Upload clothes photo">
+                        <label for="clothes-photo" class="block text-gray-600">Kıyafet fotoğrafını yüklemek için
+                            tıklayın veya sürükleyin bırakın</label>
+                        <img id="clothes-preview" class="max-w-xs max-h-xs mt-2 hidden">
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown-area mt-4">
+                <div class="button-label-group">
+                    <button id="submit-button"
+                        class="bg-blue-500 text-white px-4 py-2 rounded mt-4 md:mt-0 md:ml-4 hover:bg-blue-700 transition-all duration-300 hover-effect">
+                        Üzerimde Görmek İstiyorum
+                    </button>
+                    <label for="body-part" class="block text-gray-600 mb-2 mt-4">Elbise Türünü seçiniz</label>
+                    <input type="text" id="seed" class="border-2 border-gray-400 p-2 rounded mt-4"
+                        placeholder="Seed Value">
+                </div>
+                <select id="body-part" class="border-2 border-gray-400 p-2 rounded mt-4">
+                    <option value="shirt">Gömlek</option>
+                    <option value="pants">Pantolon</option>
+                    <option value="skirt">Etek</option>
+                    <option value="shorts">Şort</option>
+                    <option value="jacket">Ceket</option>
+                    <option value="coat">Kaban</option>
+                    <option value="sweater">Kazak</option>
+                    <option value="cardigan">Hırka</option>
+                    <option value="jeans">Kot</option>
+                    <option value="t-shirt">Tişört</option>
+                    <option value="blouse">Bluz</option>
+                    <option value="leggings">Tayt</option>
+                    <option value="hoodie">Kapşonlu</option>
+                    <option value="vest">Yelek</option>
+                    <option value="swimsuit">Mayo</option>
+                </select>
+            </div>
+            <div
+                class="result-area border-2 border-gray-400 p-4 text-center mt-4 md:mt-0 flex flex-col justify-center items-center">
+                <img id="result-image" class="max-w-xs max-h-xs hidden">
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.getElementById('human-photo').addEventListener('change', function (event) {
+            previewImage(event.target.files[0], 'human-preview');
+        });
+
+        document.getElementById('clothes-photo').addEventListener('change', function (event) {
+            previewImage(event.target.files[0], 'clothes-preview');
+        });
+
+        document.getElementById('submit-button').addEventListener('click', async function () {
+            const humanPhoto = document.getElementById('human-photo').files[0];
+            const clothesPhoto = document.getElementById('clothes-photo').files[0];
+            const bodyPart = document.getElementById('body-part').value;
+            const seed = document.getElementById('seed').value;
+
+            if (!humanPhoto || !clothesPhoto || !bodyPart) {
+                alert('Please upload both photos and select a body part.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('human', humanPhoto);
+            formData.append('garment', clothesPhoto);
+            formData.append('is_checked_crop', true);
+            formData.append('clothes_type', bodyPart);
+            formData.append('seed', seed);
+
+            try {
+                const response = await fetch('/tryon', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const resultImage = document.getElementById('result-image');
+                    resultImage.src = url;
+                    resultImage.classList.remove('hidden');
+                } else {
+                    alert('Error: ' + response.statusText);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        function previewImage(file, previewId) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const preview = document.getElementById(previewId);
+                preview.src = event.target.result;
+                preview.classList.remove('hidden');
+            }
+            reader.readAsDataURL(file);
+        }
+    </script>
+
+</body>
+
+</html>

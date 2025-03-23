@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Try-On</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .hover-effect:hover {
+            transform: scale(1.05);
+            transition: transform 0.3s ease;
+        }
+
+        .dropdown-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 40vh;
+        }
+
+        .button-label-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .gallery-item {
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.05);
+        }
+
+        .gallery img {
+            max-width: 80px;
+            max-height: 80px;
+            margin: 5px;
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-400 to-indigo-500">
+
+    <div class="container mx-auto p-4">
+        <div class="text-center mb-8">
+            <h1 class="text-5xl font-extrabold text-white">Yapay Zeka Deneme Kabini</h1>
+            <p class="text-xl text-gray-200">Kıyafetleri zahmetsizce yeni nesil yapay zeka ile üzerinizde görün.</p>
+        </div>
+        <div class="flex flex-col md:flex-row justify-between items-center bg-white p-6 shadow-lg rounded-lg">
+            <div class="input-area flex flex-col md:flex-row items-center">
+                <div class="middle-section flex flex-col items-center mt-4 md:mt-0">
+                    <div class="upload-area flex flex-col justify-center items-center border-2 border-dashed border-gray-400 p-4 text-center mr-4 relative cursor-pointer hover:border-blue-500 transition-all duration-300 hover-effect"
+                        id="human-upload" aria-label="Upload your photo">
+                        <input type="file" id="human-photo" accept="image/*"
+                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                        <label for="human-photo" class="block text-gray-600">Fotoğrafınızı yüklemek için tıklayın veya
+                            sürükleyin bırakın</label>
+                        <img id="human-preview" class="max-w-xs max-h-xs mt-2 hidden">
+                    </div>
+                    <div class="gallery flex flex-wrap justify-center mt-2">
+                        <img src="static/model1.jpg" class="gallery-item"
+                            onclick="selectGalleryImage('static/model1.jpg', 'human-preview')">
+                        <img src="static/model2.jpg" class="gallery-item"
+                            onclick="selectGalleryImage('static/model2.jpg', 'human-preview')">
+                        <img src="static/model3.jpg" class="gallery-item"
+                            onclick="selectGalleryImage('static/model3.jpg', 'human-preview')">
+                        <img src="static/model4.jpg" class="gallery-item"
+                            onclick="selectGalleryImage('static/model4.jpg', 'human-preview')">
+                        <img src="static/model5.jpg" class="gallery-item"
+                            onclick="selectGalleryImage('static/model5.jpg', 'human-preview')">
+                    </div>
+                </div>
+                <div class="middle-section flex flex-col items-center mt-4 md:mt-0">
+                    <div class="upload-area flex flex-col justify-center items-center border-2 border-dashed border-gray-400 p-4 text-center relative cursor-pointer hover:border-blue-500 transition-all duration-300 hover-effect"
+                        id="clothes-upload" aria-label="Upload clothes photo">
+                        <input type="file" id="clothes-photo" accept="image/*"
+                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                        <label for="clothes-photo" class="block text-gray-600">Kıyafet fotoğrafını yüklemek için
+                            tıklayın veya sürükleyin bırakın</label>
+                        <img id="clothes-preview" class="max-w-xs max-h-xs mt-2 hidden">
+                    </div>
+                    <div class="gallery flex flex-wrap justify-center mt-2">
+                        <img src="static/clothes1.jpg" class="gallery-item"
+                            onclick="selectGalleryImage('static/clothes1.jpg', 'clothes-preview')">
+                        <img src="static/clothes2.jpg" class="gallery-item"
+                            onclick="selectGalleryImage('static/clothes2.jpg', 'clothes-preview')">
+                        <img src="static/clothes3.jpg" class="gallery-item"
+                            onclick="selectGalleryImage('static/clothes3.jpg', 'clothes-preview')">
+                        <img src="static/clothes4.jpg" class="gallery-item"
+                            onclick="selectGalleryImage('static/clothes4.jpg', 'clothes-preview')">
+                        <img src="static/clothes5.jpg" class="gallery-item"
+                            onclick="selectGalleryImage('static/clothes5.jpg', 'clothes-preview')">
+                        <img src="static/clothes6.jpg" class="gallery-item"
+                            onclick="selectGalleryImage('static/clothes6.jpg', 'clothes-preview')">
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown-area mt-4">
+                <div class="button-label-group">
+                    <input type="text" id="seed" class="border-2 border-gray-400 p-2 rounded mt-4"
+                        placeholder="Seed Value">
+                    <label for="body-part" class="block text-gray-600 mb-2 mt-4">Kıyafet Türünü Seçiniz</label>
+                </div>
+                <select id="body-part" class="border-2 border-gray-400 p-2 rounded mt-4">
+                    <option value="dress">Elbise</option>
+                    <option value="shirt">Gömlek</option>
+                    <option value="pants">Pantolon</option>
+                    <option value="long-skirt">Uzun Etek</option>
+                    <option value="short-skirt">Kısa Etek</option>
+                    <option value="shorts">Şort</option>
+                    <option value="jacket">Ceket</option>
+                    <option value="coat">Kaban</option>
+                    <option value="suit">Takım Elbise</option>
+                    <option value="sweater">Kazak</option>
+                    <option value="cardigan">Hırka</option>
+                    <option value="jeans">Kot</option>
+                    <option value="t-shirt">Tişört</option>
+                    <option value="blouse">Bluz</option>
+                    <option value="leggings">Tayt</option>
+                    <option value="hoodie">Kapşonlu</option>
+                    <option value="vest">Yelek</option>
+                    <option value="jumpsuit">Tulum</option>
+                    <option value="overalls">Salopet</option>
+                    <option value="bikini">bikini</option>
+                </select>
+
+                <div class="slider-area mt-4">
+                    <label for="denoise-slider" class="block text-gray-600 mb-2">Detay çalışmasını oranı seçiniz</label>
+                    <input type="range" id="denoise-slider" class="w-full" min="10" max="40" value="20">
+                    <span id="slider-value" class="block text-gray-600 mt-2">20</span>
+                </div>
+                <button id="submit-button"
+                    class="bg-blue-500 text-white px-4 py-2 rounded mt-4 md:mt-0 md:ml-4 hover:bg-blue-700 transition-all duration-300 hover-effect">Üzerimde
+                    Görmek İstiyorum</button>
+            </div>
+            <div
+                class="result-area border-2 border-gray-400 p-4 text-center mt-4 md:mt-0 flex flex-col justify-center items-center">
+                <img id="result-image" class="max-w-xs max-h-xs hidden">
+            </div>
+        </div>
+
+        <div class="loading-spinner" id="loading-spinner"></div>
+    </div>
+
+    <script>
+        let selectedHumanImage = null;
+        let selectedClothesImage = null;
+
+        document.getElementById('human-photo').addEventListener('change', function (event) {
+            selectedHumanImage = event.target.files[0];
+            previewImage(selectedHumanImage, 'human-preview');
+        });
+
+        document.getElementById('clothes-photo').addEventListener('change', function (event) {
+            selectedClothesImage = event.target.files[0];
+            previewImage(selectedClothesImage, 'clothes-preview');
+        });
+
+        document.getElementById('denoise-slider').addEventListener('input', function (event) {
+            document.getElementById('slider-value').textContent = event.target.value;
+        });
+
+        document.getElementById('submit-button').addEventListener('click', async function () {
+            const bodyPart = document.getElementById('body-part').value;
+            const seed = document.getElementById('seed').value;
+            const denoiseSteps = document.getElementById('denoise-slider').value;
+
+            if (!selectedHumanImage || !selectedClothesImage || !bodyPart) {
+                alert('Please upload both photos and select a body part.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('human', selectedHumanImage);
+            formData.append('garment', selectedClothesImage);
+            formData.append('is_checked_crop', true);
+            formData.append('clothes_type', bodyPart);
+            formData.append('seed', seed);
+            formData.append('denoise_steps', denoiseSteps);
+
+            const loadingSpinner = document.getElementById('loading-spinner');
+            loadingSpinner.style.display = 'block';
+
+            try {
+                const response = await fetch('/tryon', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const resultImage = document.getElementById('result-image');
+                    resultImage.src = url;
+                    resultImage.classList.remove('hidden');
+                } else {
+                    alert('Error: ' + response.statusText);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        });
+
+        function previewImage(file, previewId) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const preview = document.getElementById(previewId);
+                preview.src = event.target.result;
+                preview.classList.remove('hidden');
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function selectGalleryImage(imageSrc, previewId) {
+            const preview = document.getElementById(previewId);
+            preview.src = imageSrc;
+            preview.classList.remove('hidden');
+
+            // Create a Blob from the image URL and set it as the selected image
+            fetch(imageSrc)
+                .then(res => res.blob())
+                .then(blob => {
+                    if (previewId === 'human-preview') {
+                        selectedHumanImage = blob;
+                    } else if (previewId === 'clothes-preview') {
+                        selectedClothesImage = blob;
+                    }
+                })
+                .catch(error => console.error('Error fetching image:', error));
+        }
+    </script>
+</body>
+
+</html>
